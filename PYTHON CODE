@@ -1,0 +1,38 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.preprocessing import LabelEncoder
+np.random.seed(42)
+data_size = 1000
+data = {
+    'ApplicantIncome': np.random.randint(20000, 150000, data_size),
+    'CreditScore': np.random.randint(550, 850, data_size),
+    'ExistingEMI': np.random.randint(0, 20000, data_size),
+    'EmploymentType': np.random.choice(['Salaried', 'Self-Employed'], data_size),
+    # Target variable: 1 for Approved, 0 for Rejected
+    'LoanStatus': []
+}
+for i in range(data_size):
+    if data['CreditScore'][i] > 650 and (data['ApplicantIncome'][i] - data['ExistingEMI'][i]) > 30000:
+        data['LoanStatus'].append(1)
+    else:
+        data['LoanStatus'].append(0)
+df = pd.DataFrame(data)
+le = LabelEncoder()
+df['EmploymentType'] = le.fit_transform(df['EmploymentType'])
+X = df.drop('LoanStatus', axis=1)
+y = df['LoanStatus']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+predictions = model.predict(X_test)
+accuracy = accuracy_score(y_test, predictions)
+print(f"Model Accuracy: {accuracy * 100:.2f}%")
+print("\nClassification Report:\n")
+print(classification_report(y_test, predictions))
+new_applicant = [[80000, 720, 5000, 0]] # Income, CreditScore, EMI, EmploymentType (0=Salaried)
+prediction = model.predict(new_applicant)
+result = "Approved" if prediction[0] == 1 else "Rejected"
+print(f"\nNew Applicant Loan Status: {result}")
